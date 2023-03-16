@@ -9,7 +9,6 @@ if (isset($_GET['submit'])) {
     header("Location: ende.php?lieblingsfach=$lieblingsfach&lieblingslehrer=$lieblingslehrer");
 }
 ?>
-
 <html>
 <head>
     <title>test</title>
@@ -17,7 +16,6 @@ if (isset($_GET['submit'])) {
 <body>
     <form action="weiter.php" method="GET">
         <?php
-
         if(isset($_GET['kurzbeschreibung'])) {
             $kurzbeschreibung = $_GET['kurzbeschreibung'];
 
@@ -26,27 +24,29 @@ if (isset($_GET['submit'])) {
             $password = "";
             $dbname = "3AI";
 
-            $conn = new mysqli($servername, $username, $password, $dbname);
+            try {
+                $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
+                $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            if ($conn->connect_error) {
-                die("Verbindung fehlgeschlagen: " . $conn->connect_error);
-            }
+                $sql = "SELECT DISTINCT Langbeschreibung FROM Fach_SCH WHERE Kurzbezeichnung = '$kurzbeschreibung'";
+                $result = $conn->query($sql);
 
-            $sql = "SELECT DISTINCT Langbeschreibung FROM Fach_SCH WHERE Kurzbezeichnung = '$kurzbeschreibung'";
-            $result = $conn->query($sql);
-
-            if ($result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
-                    echo "<input type='radio' name='lieblingsfach' value='" . $row['Langbeschreibung'] . "'>" . $row['Langbeschreibung'] . "<br>";
+                if ($result->rowCount() > 0) {
+                    while ($row = $result->fetch()) {
+                        echo "<input type='radio' name='lieblingsfach' value='" . $row['Langbeschreibung'] . "'>" . $row['Langbeschreibung'] . "<br>";
+                    }
+                } else {
+                    echo "Keine Datensätze gefunden.";
                 }
-            } else {
-                echo "Keine Datensätze gefunden.";
+                echo "<br>";
+
+                echo "<input type='submit' name='submit' value='OK'>";
+
+                $conn = null;
             }
-            echo "<br>";
-
-            echo "<input type='submit' name='submit' value='OK'>";
-
-            $conn->close();
+            catch(PDOException $e) {
+                echo "Verbindung fehlgeschlagen: " . $e->getMessage();
+            }
         }
         ?>
     </form>
